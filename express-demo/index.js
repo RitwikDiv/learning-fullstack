@@ -1,11 +1,10 @@
+const Joi = require('joi');
 const express = require('express');
+
 const app = express();
 
-// Methods
-// app.get()
-// app.post()
-// app.put()
-// app.delete()
+// To make sure that the body takes json objects
+app.use(express.json);
 
 // Sample data collection
 const courses = [
@@ -35,9 +34,33 @@ app.get('/api/courses/:id', (req, res) => {
 //     res.send(`Finding all posts that were created in ${req.params.month} of ${req.params.year}`);
 // });
 
-app.get('/api/posts/:year/:month', (req,res) => {
-    res.send(req.query);
+app.post('/api/courses', (req,res) => {
+
+    const schema = {
+        name: Joi.string().min(3).required()
+    }
+
+    const result = Joi.validate(req.body, schema);
+    
+    if (result.error){
+        res.status(400).send(result.error.details[0].message);
+    }
+
+    // Performing regular input validation
+    // if (!req.body.name || req.body.name.length < 3){
+    //     res.status(400).send(JSON.stringify("Name is a required field and should be 3 characters."));
+    //     return;
+    // }
+
+    const course = {
+        id: courses.length + 1,
+        name: req.body.name,
+    };
+    courses.push(course);
+    res.send(course);
 });
+
+
 
 // setting port as an env var
 const port = process.env.PORT || 3000;
