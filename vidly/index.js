@@ -90,8 +90,6 @@ app.delete('/api/genres/:id', (req,res) => {
 
 // Starting the app and listening to it at a port
 const port = process.env.PORT || 3000;
-app.listen
-
-
-nsole.log(`Listening at port ${port}`);
+app.listen(port, () => {
+    console.log(`Listening at port ${port}`);
 });
