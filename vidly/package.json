@@ -1,11 +1,16 @@
 {
-  "name": "express-demo",
+  "name": "vidly",
   "version": "1.0.0",
-  "description": "",
+  "description": "a backend api to manage movie genres",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "keywords": [
+    "movies",
+    "genres",
+    "backend"
+  ],
   "author": "Ritwik Divakaruni",
   "license": "ISC",
   "dependencies": {
