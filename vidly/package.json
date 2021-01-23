@@ -14,7 +14,12 @@
   "author": "Ritwik Divakaruni",
   "license": "ISC",
   "dependencies": {
+    "config": "^3.3.3",
+    "debug": "^4.3.1",
     "express": "^4.17.1",
-    "joi": "^17.3.0"
+    "helmet": "^4.4.1",
+    "joi": "^17.3.0",
+    "morgan": "^1.10.0",
+    "pug": "^3.0.0"
   }
 }

@@ -1,92 +1,67 @@
 // Importing the necessary packages
 const express = require('express');
-const Joi = require('joi');
+
+// Importing middleware for logging
+const logger = require('./middleware/logger');
+const authenticate = require('./middleware/authenticate');
+
+const helmet = require('helmet'); // Securing HTTP requests
+const morgan = require('morgan'); // Logging HTTP requests
+const config = require('config'); // loading config files
+
+const startupDebugger = require('debug')('app:startup'); //  debugging variable
+const dbDebugger = require('debug')('app:db');
+// to view different types of logs -> export DEBUG="app:startup"/"app:debug"/"app:*"
+// DEBUG=app:db nodemon index.js is a shortcut
+
 
 // Creating the express app and allowing it to use json
 const app = express();
-app.use(express.json());
+const genres = require('./routes/genres.js');
+const home = require('./routes/home.js');
 
-// Create a joi validation schema function
-function validateGenre(genre){
-    const schema = Joi.object({
-        name: Joi.string().min(3).required(),
-        isPopular: Joi.boolean().required()
-    });
-    return schema.validate(genre);
+// Setting view engine to take dynamic html files through pug
+// app.set('views', './views');
+app.set('view engine', 'pug');
+
+
+// Applying the middlewares
+app.use(express.json());
+app.use(express.urlencoded({ extended: true})); // key=value&key=value
+app.use(express.static('public')); // Serving static files in the folder public. 
+app.use(helmet());
+
+app.use('/api/genres', genres);
+app.use('/', home);
+
+
+// Configuration
+console.log(`Application Name: ${config.get('name')}`);
+console.log(`Mail Server Name: ${config.get('mail').host}`);
+console.log(`Mail Password: ${config.get('mail.password')}`); 
+// get password from custom-environment-variables.json
+
+
+// Getting the env
+// console.log(`NODE ENV: ${process.env.NODE_ENV}`);
+// console.log(`app get env: ${app.get('env')}`);
+
+
+// set env variables through the following: 
+// export NODE_ENV=production for mac
+//$env:NODE_ENV="production" for powershell
+if (app.get('env') === 'development'){
+    app.use(morgan('tiny')); // Logging all the requests. Not for production
+    startupDebugger(`Morgan logging enabled`);
 }
 
-// Sample data
-const genres = [
-    {
-        id: 1,
-        name: 'horror',
-        isPopular: true 
-    },
-    {
-        id: 2,
-        name: 'action',
-        isPopular: true
-    },
-    {
-        id: 3, 
-        name: 'romance',
-        isPopular: false
-    }
-];
 
+// assume we have some db stuff
+dbDebugger('Connected to the database');
 
-// Get home page
-app.get('/api/', (req,res) => {
-    res.send("Welcome to vidly backend service. Use the appropriate api gateways. ");
-});
+// app.use(logger);
+// app.use(authenticate);
 
-// Get all genres
-app.get('/api/genres', (req,res) => {
-    res.send(genres);
-});
-
-// Get one genre
-app.get('/api/genres/:id', (req,res) =>{
-    const genre = genres.find(c => c.id === parseInt(req.params.id));
-    if (!genre) return res.status(404).send(`Couldn't find genre with id: ${req.params.id}`);
-    res.send(genre);
-});
-
-// Post a genre
-app.post('/api/genres', (req, res) => {
-    const {error} = validateGenre(req.body);
-    if (error) return res.status(400).send(error.details[0].message);
-    const genre = {
-        id: genres.length + 1,
-        name: req.body.name,
-        isPopular: req.body.isPopular
-    };
-    genres.push(genre);
-    res.send(genre);
-});
-
-// Put a genre
-app.put('/api/genres/:id', (req,res) => {
-    const genre = genres.find(c => c.id === parseInt(req.params.id));
-    if (!genre) return res.status(404).send(`Couldn't find genre to update with id: ${req.params.id}`);
-
-    const {error} = validateGenre(req.body);
-    if (error) return res.status(400).send(error.details[0].message);
-
-    genre.name = req.body.name;
-    genre.isPopular = req.body.isPopular;
-    res.send(genre);
-});
-
-// Delete a genre
-app.delete('/api/genres/:id', (req,res) => {
-    const genre = genres.find(c => c.id === parseInt(req.params.id));
-    if (!genre) return res.status(404).send(`Couldn't find genre to update with id: ${req.params.id}`);
-
-    const index = genres.indexOf(genre);
-    genres.splice(index,1);
-    res.send(genre);
-});
 
 // Starting the app and listening to it at a port
 const port = process.env.PORT || 3000;
