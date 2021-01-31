@@ -1,0 +1,6 @@
+{
+    "mongo": {
+        "username": "dbUser",
+        "password": "dbPass"
+    }
+}
