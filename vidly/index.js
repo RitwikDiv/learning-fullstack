@@ -1,13 +1,26 @@
 // Importing the necessary packages
 const express = require('express');
 
+// load mongoose
+const mongoose = require("mongoose");
+
+const config = require('config'); // loading config files
+
+// Connect Mongoose 
+const uri = `mongodb+srv://${config.get("mongo").username}:${config.get("mongo").password}@sandbox.vlco9.mongodb.net/playground?retryWrites=true&w=majority`;
+mongoose.set("useNewUrlParser", true);
+mongoose.set("useUnifiedTopology", true);
+
+mongoose.connect(uri)
+    .then(() => console.log("Connected to the MongoDB"))
+    .catch(err => console.log(`Couldn't establish a connection: ${err.message}`));
+
 // Importing middleware for logging
 const logger = require('./middleware/logger');
 const authenticate = require('./middleware/authenticate');
 
 const helmet = require('helmet'); // Securing HTTP requests
 const morgan = require('morgan'); // Logging HTTP requests
-const config = require('config'); // loading config files
 
 const startupDebugger = require('debug')('app:startup'); //  debugging variable
 const dbDebugger = require('debug')('app:db');
@@ -33,14 +46,6 @@ app.use(helmet());
 
 app.use('/api/genres', genres);
 app.use('/', home);
-
-
-// Configuration
-console.log(`Application Name: ${config.get('name')}`);
-console.log(`Mail Server Name: ${config.get('mail').host}`);
-console.log(`Mail Password: ${config.get('mail.password')}`); 
-// get password from custom-environment-variables.json
-
 
 // Getting the env
 // console.log(`NODE ENV: ${process.env.NODE_ENV}`);

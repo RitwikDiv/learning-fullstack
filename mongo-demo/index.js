@@ -25,13 +25,49 @@ mongoose.connect(uri)
 
 // Schema types: string, number, date, buffer, boolean, object id, array
 
-
+// Implementing validation
 const courseSchema = new mongoose.Schema({
-    name: String,
+    name: {
+        type: String, 
+        required: true,
+        minlength: 2,
+        maxlength: 40,
+    },
+    category: {
+        type: String,
+        required: true,
+        enum: ['web', 'mobile', 'network'],
+        lowercase: true, // uppercase: true
+        trim: true
+    },
     author: String,
-    tags: [ String ],
+    tags: {
+        type: Array,
+        required: true,
+        validate: {
+            isAsync: true,
+            validator: function (v, callback) {
+                // Do some async work
+                setTimeout(() => {
+                    const result = v && v.length > 0;
+                    callback(result);
+                }, 1000);
+            },
+            message: "A course should have atleast 1 tags"
+        }
+    },
     date: { type: Date, default: Date.now},
-    isPublished: Boolean
+    isPublished: Boolean,
+    price: {
+        type: Number,
+        required: function () {
+            return this.isPublished;
+        },
+        min: 10,
+        max: 200,
+        get: (v) => Math.round(v),
+        set: (v) => Math.round(v)
+    }
 });
 
 // We have the model course
@@ -41,18 +77,24 @@ const Course = mongoose.model('Course', courseSchema); // Providing the name of 
 async function createCourse() {
     // Creating an item course
     const course = new Course({
-        name: "MongoDB Course",
-        author: "Ritwik",
-        tags: ['tutorial', 'mongo', 'mongoose'],
+        name: "React JS Course",
+        author: "Chris",
+        tags: ['tutorial', 'frontend', 'javascript'],
         isPublished: false
     });
     // Add the value to the database
-    const result = await course.save();
-    console.log(`Result from the operation: ${result}`);
+    try{
+        const result = await course.save();
+        console.log(`Result from the operation: ${result}`);
+    } catch (ex) {
+        for (field in ex.errors)
+            console.log(ex.errors[field].message);
+    }
+
 }
 
 // Add a new object to the collection using the command below
-// createCourse();
+createCourse();
 
 // ------------------------------------------------------
 // Comparison operators
@@ -84,7 +126,7 @@ async function createCourse() {
 // Regular querying documents
 async function getCourses() {
     const courses = await Course
-        .find({name: "NodeJS Course"})
+        .find({tags: "frontend"})
         // .find({price: {$gte: 10, $lte: 20}})
         // .find({price: {$in: [10,15,20]}})
         .limit(10)
@@ -93,7 +135,7 @@ async function getCourses() {
     console.log(courses);
 }
 
-getCourses();
+// getCourses();
 
 // Count available documents
 async function countCourses() {
@@ -103,7 +145,7 @@ async function countCourses() {
     console.log(`Data points which match your query: ${count}`);
 }
 
-countCourses();
+// countCourses();
 
 // Implementing pagination
 async function getCoursesPaged() {
@@ -120,6 +162,42 @@ async function getCoursesPaged() {
     console.log(courses);
 }
 
+// Update function
+async function updateCourse(id){
+    // THis method is good for applying business logic
+    // Query first
+    // findById()
+    // Modify properties
+    // Save it
+    // const course = await Course.findById(id); 
+    // if (!course) return;    
+    // course.isPublished = true;
+    // course.author = "Ritwik Divakaruni";
+    // const result = await course.save();
+    // console.log(result);
+
+
+    // Update first
+    // Update directly
+    // Get updated document
+    const course = await Course.findByIdAndUpdate(id, {
+        $set: {
+            author: 'Ritwik',
+            isPublished: false
+        }
+    }, {new: true}); // new property returns the latest updated val
+    console.log(course);
+
+}
+
+// updateCourse("601605ec1c74ed108fe549d2");
+
+// Remove a document
+async function deleteCourse(id){
+    const result = await Course.deleteOne({_id: id});
+    // Course.findByIdAndRemove(id);
+    console.log(result);
+}
 
 // If the Node process ends, close the Mongoose connection
 process.on('SIGINT', function() {
